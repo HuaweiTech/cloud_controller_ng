@@ -30,6 +30,7 @@ module VCAP::CloudController
     before do
       Steno.stub(:logger).and_return(logger)
       DeaClient.stub(:start)
+      diego_client.stub(:running_enabled).and_return(false)
 
       staged_app.add_new_droplet("lol")
     end
@@ -59,7 +60,11 @@ module VCAP::CloudController
           end
         end
 
-        context "without the DIEGO_RUN_BETA flag" do
+        context "when running in diego is not enabled" do
+          before do
+            diego_client.stub(:running_enabled).and_return(false)
+          end
+
           it "starts the app instances" do
             DeaClient.should_receive(:start) do |received_app, received_hash|
               received_app.guid.should ==  app_id
@@ -82,8 +87,10 @@ module VCAP::CloudController
           end
         end
 
-        context "with the CF_DIEGO_RUN_BETA flag" do
-          let(:environment) { {"CF_DIEGO_RUN_BETA" => "true"} }
+        context "when running in diego is enabled" do
+          before do
+            diego_client.stub(:running_enabled).and_return(true)
+          end
 
           it "desires the app using the diego client" do
             DeaClient.should_not_receive(:start)
