@@ -607,7 +607,7 @@ RSpec.configure do |rspec_config|
         $spec_env.reset_database_with_seeds
       end
     else
-      Sequel::Model.db.transaction(rollback: :always) do
+      Sequel::Model.db.transaction(rollback: :always, savepoint: true) do
         example.run
       end
     end
