@@ -57,7 +57,7 @@ module VCAP::CloudController
         end
 
         app.update_detected_buildpack(payload["detected_buildpack"], payload["buildpack_key"])
-        app.current_droplet.update_staging_complete(payload["detected_start_command"])
+        app.current_droplet.update_start_command(payload["detected_start_command"])
 
         if @diego_client.running_enabled(app)
           @diego_client.send_desire_request(app)

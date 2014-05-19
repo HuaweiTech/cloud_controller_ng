@@ -24,7 +24,7 @@ module VCAP::CloudController
     describe "desiring an app" do
       before do
         app.add_new_droplet("lol")
-        app.current_droplet.update_staging_complete("./some-detected-command")
+        app.current_droplet.update_start_command("./some-detected-command")
       end
 
       it "sends a nats message with the appropriate subject and payload" do
