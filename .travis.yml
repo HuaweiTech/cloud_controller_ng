@@ -12,7 +12,7 @@ rvm:
   - 1.9.3-p545
 
 script:
-  - bundle exec rake ci:$TASK[$RANDOM]
+  - bundle exec rake ci:$TASK[$SEED]
   - bundle exec rake rubocop
 
 env:
