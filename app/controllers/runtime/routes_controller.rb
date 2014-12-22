@@ -7,7 +7,7 @@ module VCAP::CloudController
       to_many :apps
     end
 
-    query_parameters :host, :domain_guid
+    query_parameters :host, :domain_guid, :organization_guid
 
     def self.translate_validation_exception(e, attributes)
       name_errors = e.errors.on([:host, :domain_id])
@@ -30,6 +30,23 @@ module VCAP::CloudController
 
     def delete(guid)
       do_delete(find_guid_and_validate_access(:delete, guid))
+    end
+    
+    def get_filtered_dataset_for_enumeration(model, ds, qp, opts)
+      single_filter = opts[:q][0] if opts[:q]
+
+      if single_filter && single_filter.start_with?('organization_guid')
+        org_guid = single_filter.split(':')[1]
+
+        Query.
+          filtered_dataset_from_query_params(model, ds, qp, { q: '' }).
+          select_all(:routes).
+          left_join(:spaces, id: :routes__space_id).
+          left_join(:organizations, id: :spaces__organization_id).
+          where(:organizations__guid => org_guid)
+      else
+        super(model, ds, qp, opts)
+      end
     end
 
     get "#{path}/reserved/domain/:domain_guid/host/:host", :route_reserved
