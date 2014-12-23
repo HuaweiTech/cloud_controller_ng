@@ -226,7 +226,33 @@ module VCAP::CloudController
 		  expect(decoded_response['resources'].length).to eq(1)
 		  expect(first_route_info.fetch('metadata').fetch('guid')).to eq(route_guid)
 		end
+
+		it 'Allows organization_guid query at any place in query ' do
+                  org_guid = organization.guid
+                  route_guid = route.guid
+		  domain_guid = domain.guid
+
+                  get "v2/routes?q=domain_guid:#{domain_guid}&q=organization_guid:#{org_guid}", {}, admin_headers
+
+                  expect(last_response.status).to eq(200)
+                  expect(decoded_response['resources'].length).to eq(1)
+                  expect(first_route_info.fetch('metadata').fetch('guid')).to eq(route_guid)
+                end
 		
+		it 'Allows organization_guid query at any place in query with all querables' do
+                  org_guid = organization.guid
+                  taken_host = "someroute"
+                  routeTemp = Route.make(host: taken_host, domain: domain, space: space)
+		  route_guid = routeTemp.guid
+                  domain_guid = domain.guid
+
+                  get "v2/routes?q=host:#{taken_host}&q=organization_guid:#{org_guid}&q=domain_guid:#{domain_guid}", {}, admin_headers
+
+                  expect(last_response.status).to eq(200)
+                  expect(decoded_response['resources'].length).to eq(1)
+                  expect(first_route_info.fetch('metadata').fetch('guid')).to eq(route_guid)
+                end
+
 		it 'Allows filtering at organization level' do		  
 		  org_guid = organization.guid		  
 		  route_guid = route.guid

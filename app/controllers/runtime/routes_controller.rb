@@ -31,15 +31,14 @@ module VCAP::CloudController
     def delete(guid)
       do_delete(find_guid_and_validate_access(:delete, guid))
     end
-    
+
     def get_filtered_dataset_for_enumeration(model, ds, qp, opts)
-      single_filter = opts[:q][0] if opts[:q]
+      orgIndex = opts[:q].index {|query| query.start_with?('organization_guid:') } if opts[:q]
+      if orgIndex != nil
+        org_guid = opts[:q][orgIndex].split(':')[1]
+        opts[:q].delete(opts[:q][orgIndex])
 
-      if single_filter && single_filter.start_with?('organization_guid')
-        org_guid = single_filter.split(':')[1]
-
-        Query.
-          filtered_dataset_from_query_params(model, ds, qp, { q: '' }).
+        super(model, ds, qp, opts).
           select_all(:routes).
           left_join(:spaces, id: :routes__space_id).
           left_join(:organizations, id: :spaces__organization_id).
