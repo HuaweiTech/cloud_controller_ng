@@ -1,4 +1,5 @@
 require 'cloud_controller/diego/environment'
+require 'cloud_controller/diego/process_guid'
 
 module VCAP::CloudController
   module Diego
@@ -21,6 +22,7 @@ module VCAP::CloudController
             'file_descriptors' => app.file_descriptors,
             'stack' => app.stack.name,
             'docker_image' => app.docker_image,
+            'egress_rules' => @common_protocol.staging_egress_rules,
             'timeout' => staging_timeout,
           }
         end
@@ -35,7 +37,7 @@ module VCAP::CloudController
 
         def desire_app_message(app)
           message = {
-            'process_guid' => app.versioned_guid,
+            'process_guid' => ProcessGuid.from_app(app),
             'memory_mb' => app.memory,
             'disk_mb' => app.disk_quota,
             'file_descriptors' => app.file_descriptors,
@@ -48,6 +50,8 @@ module VCAP::CloudController
             'log_guid' => app.guid,
             'docker_image' => app.docker_image,
             'health_check_type' => app.health_check_type,
+            'egress_rules' => @common_protocol.running_egress_rules(app),
+            'etag' => app.updated_at.to_f.to_s
           }
 
           message['health_check_timeout_in_seconds'] = app.health_check_timeout if app.health_check_timeout

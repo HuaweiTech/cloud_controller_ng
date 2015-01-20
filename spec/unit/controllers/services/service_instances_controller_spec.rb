@@ -178,6 +178,8 @@ module VCAP::CloudController
           allow(client).to receive(:provision) do |instance|
             instance.credentials = '{}'
             instance.dashboard_url = 'the dashboard_url'
+            instance.state = 'creating'
+            instance.state_description = ''
           end
           allow(client).to receive(:deprovision)
           allow_any_instance_of(Service).to receive(:client).and_return(client)
@@ -190,6 +192,8 @@ module VCAP::CloudController
 
           expect(instance.credentials).to eq('{}')
           expect(instance.dashboard_url).to eq('the dashboard_url')
+          expect(decoded_response['entity']['state']).to eq 'creating'
+          expect(decoded_response['entity']['state_description']).to eq ''
         end
 
         it 'creates a service audit event for creating the service instance' do
@@ -558,16 +562,33 @@ module VCAP::CloudController
         let(:uri) { 'http://uri.example.com' }
         let(:method) { 'GET' }
         let(:response_body) { '{"description": "error message"}' }
-        let(:response) { double(code: 422, reason: 'Broker rejected the upate', body: response_body) }
+        let(:response) { double(code: 500, reason: 'Internal Server Error', body: response_body) }
 
         before do
-          allow(client).to receive(:update_service_plan).and_raise(VCAP::Services::ServiceBrokers::V2::ServiceBrokerBadResponse.new(uri, method, response))
+          allow(client).to receive(:update_service_plan).and_raise(VCAP::Services::ServiceBrokers::V2::Errors::ServiceBrokerBadResponse.new(uri, method, response))
         end
 
         it 'returns a CF-ServiceBrokerBadResponse' do
           put "/v2/service_instances/#{service_instance.guid}", body, admin_headers
           expect(last_response.status).to eq 502
           expect(decoded_response['error_code']).to eq 'CF-ServiceBrokerBadResponse'
+        end
+      end
+
+      context 'when the broker client raises a ServiceBrokerRequestRejected' do
+        let(:uri) { 'http://uri.example.com' }
+        let(:method) { 'GET' }
+        let(:response_body) { '{"description": "error message"}' }
+        let(:response) { double(code: 422, reason: 'Broker rejected the upate', body: response_body) }
+
+        before do
+          allow(client).to receive(:update_service_plan).and_raise(VCAP::Services::ServiceBrokers::V2::Errors::ServiceBrokerRequestRejected.new(uri, method, response))
+        end
+
+        it 'returns a CF-ServiceBrokerBadResponse' do
+          put "/v2/service_instances/#{service_instance.guid}", body, admin_headers
+          expect(last_response.status).to eq 502
+          expect(decoded_response['error_code']).to eq 'CF-ServiceBrokerRequestRejected'
         end
       end
 

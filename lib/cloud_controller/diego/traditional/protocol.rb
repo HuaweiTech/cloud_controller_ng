@@ -1,5 +1,6 @@
 require 'cloud_controller/diego/traditional/buildpack_entry_generator'
 require 'cloud_controller/diego/environment'
+require 'cloud_controller/diego/process_guid'
 
 module VCAP::CloudController
   module Diego
@@ -37,13 +38,14 @@ module VCAP::CloudController
             'droplet_upload_uri' => @blobstore_url_generator.droplet_upload_url(app),
             'build_artifacts_cache_download_uri' => @blobstore_url_generator.buildpack_cache_download_url(app),
             'build_artifacts_cache_upload_uri' => @blobstore_url_generator.buildpack_cache_upload_url(app),
+            'egress_rules' => @common_protocol.staging_egress_rules,
             'timeout' => staging_timeout,
           }
         end
 
         def desire_app_message(app)
           message = {
-            'process_guid' => app.versioned_guid,
+            'process_guid' => ProcessGuid.from_app(app),
             'memory_mb' => app.memory,
             'disk_mb' => app.disk_quota,
             'file_descriptors' => app.file_descriptors,
@@ -56,6 +58,8 @@ module VCAP::CloudController
             'routes' => app.uris,
             'log_guid' => app.guid,
             'health_check_type' => app.health_check_type,
+            'egress_rules' => @common_protocol.running_egress_rules(app),
+            'etag' => app.updated_at.to_f.to_s
           }
 
           message['health_check_timeout_in_seconds'] = app.health_check_timeout if app.health_check_timeout

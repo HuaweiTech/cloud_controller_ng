@@ -1577,18 +1577,6 @@ module VCAP::CloudController
       end
     end
 
-    describe 'versioned_guid' do
-      before do
-        @app = App.new
-        @app.guid = 'appguid'
-        @app.version = 'versionuuid'
-      end
-
-      it "is the app's guid qualified by its version" do
-        expect(@app.versioned_guid).to eq('appguid-versionuuid')
-      end
-    end
-
     describe 'uris' do
       it 'should return the uris on the app' do
         app = AppFactory.make(space: space)
@@ -1653,6 +1641,17 @@ module VCAP::CloudController
         it 'should use the default quota' do
           app = App.create_from_hash(name: 'test', space_guid: space.guid)
           expect(app.disk_quota).to eq(512)
+        end
+      end
+
+      describe 'container_file_descriptor_limit' do
+        before do
+          TestConfig.override({ container_file_descriptor_limit: 200 })
+        end
+
+        it 'uses the container_file_descriptor_limit config variable' do
+          app = App.create_from_hash(name: 'awesome app', space_guid: space.guid)
+          expect(app.file_descriptors).to eq(200)
         end
       end
     end

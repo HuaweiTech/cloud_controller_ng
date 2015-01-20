@@ -5,6 +5,8 @@ module VCAP::CloudController::RestController
   class ModelController < BaseController
     include Routes
 
+    attr_reader :object_renderer, :collection_renderer
+
     def inject_dependencies(dependencies)
       super
       @object_renderer = dependencies.fetch(:object_renderer)
@@ -74,11 +76,15 @@ module VCAP::CloudController::RestController
     def do_delete(obj)
       raise_if_has_associations!(obj) if v2_api? && !recursive?
       model_deletion_job = Jobs::Runtime::ModelDeletion.new(obj.class, obj.guid)
+      enqueue_deletion_job(model_deletion_job)
+    end
+
+    def enqueue_deletion_job(deletion_job)
       if async?
-        job = Jobs::Enqueuer.new(model_deletion_job, queue: 'cc-generic').enqueue
+        job = Jobs::Enqueuer.new(deletion_job, queue: 'cc-generic').enqueue
         [HTTP::ACCEPTED, JobPresenter.new(job).to_json]
       else
-        model_deletion_job.perform
+        deletion_job.perform
         [HTTP::NO_CONTENT, nil]
       end
     end
@@ -130,7 +136,9 @@ module VCAP::CloudController::RestController
         @opts
       )
 
-      collection_renderer.render_json(
+      associated_controller_instance = CloudController::ControllerFactory.new(@config, @logger, @env, @params, @body, @sinatra).create_controller(associated_controller)
+
+      associated_controller_instance.collection_renderer.render_json(
         associated_controller,
         filtered_dataset,
         associated_path,
@@ -227,10 +235,6 @@ module VCAP::CloudController::RestController
     def model
       self.class.model
     end
-
-    protected
-
-    attr_reader :object_renderer, :collection_renderer
 
     private
 

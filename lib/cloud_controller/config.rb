@@ -44,6 +44,8 @@ module VCAP::CloudController
         optional(:maximum_app_disk_in_mb) => Fixnum,
         :maximum_health_check_timeout => Fixnum,
 
+        optional(:container_file_descriptor_limit) => Fixnum,
+
         optional(:allow_debug) => bool,
 
         optional(:login) => {
@@ -179,6 +181,9 @@ module VCAP::CloudController
         optional(:uaa_client_name) => String,
         optional(:uaa_client_secret) => String,
         optional(:uaa_client_scope) => String,
+
+        optional(:cloud_controller_username_lookup_client_name) => String,
+        optional(:cloud_controller_username_lookup_client_secret) => String,
 
         :renderer => {
           max_results_per_page: Integer,

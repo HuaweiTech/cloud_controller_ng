@@ -43,6 +43,7 @@ require 'cloud_controller/db'
 require 'cloud_controller/runner'
 require 'cloud_controller/app_observer'
 require 'cloud_controller/dea/app_stager_task'
+require 'cloud_controller/collection_transformers'
 require 'cloud_controller/controllers'
 require 'cloud_controller/roles'
 require 'cloud_controller/encryptor'
@@ -87,5 +88,8 @@ require 'cloud_controller/install_buildpacks'
 require 'cloud_controller/upload_buildpack'
 
 require 'cloud_controller/errors/instances_unavailable'
+
+require 'cloud_controller/uaa/errors'
+require 'cloud_controller/uaa/uaa_client'
 
 require 'services'
