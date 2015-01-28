@@ -139,8 +139,8 @@ module VCAP::CloudController
 
       let(:app_obj) { AppFactory.make(instances: 1) }
 
-      def update_app
-        put "/v2/apps/#{app_obj.guid}", MultiJson.dump(update_hash), json_headers(admin_headers)
+      def update_app(app=app_obj)
+        put "/v2/apps/#{app.guid}", MultiJson.dump(update_hash), json_headers(admin_headers)
       end
 
       describe 'app_scaling feature flag' do
@@ -183,6 +183,72 @@ module VCAP::CloudController
             end
 
             update_app
+          end
+
+          it 'receive previous state' do
+            allow(app_event_repository).to receive(:record_app_update).and_call_original
+
+            update_app
+
+            expect(app_event_repository).to have_received(:record_app_update) do |recorded_app, recorded_space, user, user_name, attributes|
+              expect(recorded_app.guid).to eq(app_obj.guid)
+              expect(recorded_app.instances).to eq(2)
+              expect(user).to eq(admin_user)
+              expect(user_name).to eq(SecurityContext.current_user_email)
+              expect(attributes).to eq({ 'instances' => 2 })
+              expect(recorded_app.state_before_update).to eq('STOPPED')
+            end
+          end
+        end
+
+        context 'when state update succeeds' do
+          let(:update_hash) { { 'state' => 'STARTED' } }
+          let(:app_tmp_obj) { AppFactory.make(instances: 1) }
+
+          it 'receive previous state' do
+            allow(app_event_repository).to receive(:record_app_update).and_call_original
+
+            update_app
+
+            expect(app_event_repository).to have_received(:record_app_update) do |recorded_app, recorded_space, user, user_name, attributes|
+              expect(recorded_app.guid).to eq(app_obj.guid)
+              expect(recorded_app.state).to eq('STARTED')
+              expect(user).to eq(admin_user)
+              expect(user_name).to eq(SecurityContext.current_user_email)
+              expect(attributes).to eq({ 'state' => 'STARTED' })
+              expect(recorded_app.state_before_update).to eq('STOPPED')
+            end
+          end
+
+          it 'records the previous state fields on the event' do
+            allow(app_event_repository).to receive(:record_app_update).and_call_original
+
+            update_app
+
+            arg = nil
+            expect(app_event_repository).to have_received(:record_app_update) do |*args|
+              arg = args
+            end
+
+            event = app_event_repository.record_app_update(*arg).reload
+            expect(event.metadata.fetch('previous_state')).to eq({ 'state' => 'STOPPED' })
+          end
+
+          it 'records the previous state separately for different apps' do
+            update_app(app_tmp_obj)
+
+            allow(app_event_repository).to receive(:record_app_update).and_call_original
+
+            update_app(app_obj)
+
+            expect(app_event_repository).to have_received(:record_app_update) do |recorded_app, recorded_space, user, user_name, attributes|
+              expect(recorded_app.guid).to eq(app_obj.guid)
+              expect(recorded_app.state).to eq('STARTED')
+              expect(user).to eq(admin_user)
+              expect(user_name).to eq(SecurityContext.current_user_email)
+              expect(attributes).to eq({ 'state' => 'STARTED' })
+              expect(recorded_app.state_before_update).to eq('STOPPED')
+            end
           end
         end
 

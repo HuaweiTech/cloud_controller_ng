@@ -112,6 +112,15 @@ module VCAP::CloudController
       record_app_create_value if request_attrs
     end
 
+    def before_update(app)
+      save_state_before_update(app)
+    end
+
+    def save_state_before_update(app)
+      state = app.state
+      app.define_singleton_method(:state_before_update) { state }
+    end
+
     def after_update(app)
       stager_response = app.last_stager_response
       if stager_response.respond_to?(:streaming_log_url) && stager_response.streaming_log_url
