@@ -18,11 +18,7 @@ module VCAP::CloudController
           Loggregator.emit(app.guid, "Updated app with guid #{app.guid} (#{app_audit_hash(request_attrs)})")
 
           actor = { name: actor_name, guid: actor.guid, type: 'user' }
-          if app.respond_to?(:state_before_update)
-            metadata = { request: app_audit_hash(request_attrs), previous_state: { state: app.state_before_update } }
-          else
-            metadata = { request: app_audit_hash(request_attrs) }
-          end
+          metadata = { request: app_audit_hash(request_attrs), prior_state: app.prior_state }
           create_app_audit_event('audit.app.update', app, space, actor, metadata)
         end
 
