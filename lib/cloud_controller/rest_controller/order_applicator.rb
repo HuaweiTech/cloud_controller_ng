@@ -32,7 +32,7 @@ module VCAP::CloudController::RestController
     end
 
     def validate_column(ds, col)
-      unless ds.columns.include?(col.to_sym)
+      unless ds.columns.include?(col)
         raise VCAP::Errors::ApiError.new_from_details(
                 'BadQueryParameter',
                 "invalid request parameter '#{col}' in order_by")
