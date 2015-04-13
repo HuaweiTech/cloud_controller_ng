@@ -6,7 +6,7 @@ module VCAP::CloudController::RestController
       @logger = logger
     end
 
-    def parse(controller, params, query_string=nil)
+    def parse(params, query_string=nil)
       @logger.debug "parse_params: #{params} #{query_string}"
       # Sinatra squashes duplicate query parms into a single entry rather
       # than an array (which we might have for q)
@@ -41,23 +41,10 @@ module VCAP::CloudController::RestController
       end
 
       if res[:order_by]
-        attributes = res[:order_by].split(',')
-
-        validate_query_parameter(controller, attributes)
-        res[:order_by] = attributes
+        res[:order_by] = res[:order_by].split(',')
       end
 
       res
-    end
-
-    def validate_query_parameter(controller, attributes)
-      attributes.each do |col|
-        unless controller.class.query_parameters.to_a.include?(col)
-          raise VCAP::Errors::ApiError.new_from_details(
-                'BadQueryParameter',
-                "invalid request parameter '#{col}' in order_by")
-        end
-      end
     end
   end
 end
