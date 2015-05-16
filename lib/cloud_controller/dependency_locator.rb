@@ -201,8 +201,8 @@ module CloudController
       create_paginated_collection_renderer
     end
 
-    def object_collection_renderer
-      create_object_collection_renderer
+    def created_object_renderer
+      create_object_renderer
     end
 
     def large_paginated_collection_renderer
@@ -221,8 +221,8 @@ module CloudController
       create_paginated_collection_renderer(collection_transformer: UsernamesAndRolesPopulator.new(username_lookup_uaa_client))
     end
 
-    def quota_usage_populating_collection_renderer
-      create_object_collection_renderer(collection_transformer: QuotaUsagePopulator.new)
+    def quota_usage_populating_renderer
+      create_object_renderer(transformer: QuotaUsagePopulator.new)
     end
 
     def username_lookup_uaa_client
@@ -247,15 +247,15 @@ module CloudController
 
     private
 
-    def create_object_collection_renderer(opts={})
+    def create_object_renderer(opts={})
       eager_loader               = opts[:eager_loader] || VCAP::CloudController::RestController::SecureEagerLoader.new
       serializer                 = opts[:serializer] || VCAP::CloudController::RestController::PreloadedObjectSerializer.new
       max_inline_relations_depth = opts[:max_inline_relations_depth] || @config[:renderer][:max_inline_relations_depth]
-      collection_transformer     = opts[:collection_transformer]
+      transformer     = opts[:transformer]
 
       VCAP::CloudController::RestController::ObjectRenderer.new(eager_loader, serializer, {
         max_inline_relations_depth: max_inline_relations_depth,
-        collection_transformer: collection_transformer
+        transformer: transformer
       })
     end
 

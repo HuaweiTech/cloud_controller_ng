@@ -395,20 +395,20 @@ describe CloudController::DependencyLocator do
     end
   end
 
-  describe '#quota_usage_populating_collection_renderer' do
+  describe '#quota_usage_populating_renderer' do
     it 'returns collection renderer with a QuotaUsagePopulator transformer' do
-      renderer = locator.quota_usage_populating_collection_renderer
-      expect(renderer.collection_transformer).to be_a(VCAP::CloudController::QuotaUsagePopulator)
+      renderer = locator.quota_usage_populating_renderer
+      expect(renderer.transformer).to be_a(VCAP::CloudController::QuotaUsagePopulator)
     end
   end
 
-  describe '#object_collection_renderer' do
-    it 'returns collection renderer configured via config' do
+  describe '#created_object_renderer' do
+    it 'returns object renderer configured via config' do
       eager_loader = instance_of(VCAP::CloudController::RestController::SecureEagerLoader)
       serializer = instance_of(VCAP::CloudController::RestController::PreloadedObjectSerializer)
       opts = {
         max_inline_relations_depth: 100_002,
-        collection_transformer: nil
+        transformer: nil
       }
 
       TestConfig.override(renderer: opts)
@@ -419,7 +419,7 @@ describe CloudController::DependencyLocator do
         with(eager_loader, serializer, opts).
         and_return(renderer)
 
-      expect(locator.object_collection_renderer).to eq(renderer)
+      expect(locator.created_object_renderer).to eq(renderer)
     end
   end
 

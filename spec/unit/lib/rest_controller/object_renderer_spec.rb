@@ -5,11 +5,11 @@ module VCAP::CloudController::RestController
     subject(:renderer) { described_class.new(eager_loader, serializer, renderer_opts) }
     let(:eager_loader) { SecureEagerLoader.new }
     let(:serializer) { PreloadedObjectSerializer.new }
-    let(:collection_transformer) { nil }
+    let(:transformer) { nil }
     let(:renderer_opts) do
       {
          max_inline_relations_depth: 100_000,
-         collection_transformer: collection_transformer
+         transformer: transformer
       }
     end
 
@@ -50,12 +50,12 @@ module VCAP::CloudController::RestController
         end
       end
 
-      context 'when collection_transformer is given' do
-        let(:collection_transformer) { double('collection_transformer') }
+      context 'when transformer is given' do
+        let(:transformer) { double('transformer') }
 
         it 'passes the populated dataset to the transformer' do
-          expect(collection_transformer).to receive(:transform) do |collection|
-            expect(collection).to eq(instance)
+          expect(transformer).to receive(:transform) do |object|
+            expect(object).to eq(instance)
           end
 
           subject.render_json(controller, instance, opts)

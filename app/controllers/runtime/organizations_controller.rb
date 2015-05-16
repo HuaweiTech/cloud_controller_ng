@@ -4,13 +4,13 @@ require 'queries/organization_user_roles_fetcher'
 module VCAP::CloudController
   class OrganizationsController < RestController::ModelController
     def self.dependencies
-      [:username_and_roles_populating_collection_renderer, :quota_usage_populating_collection_renderer]
+      [:username_and_roles_populating_collection_renderer, :quota_usage_populating_renderer]
     end
 
     def inject_dependencies(dependencies)
       super
       @user_roles_collection_renderer = dependencies.fetch(:username_and_roles_populating_collection_renderer)
-      @quota_usage_collection_renderer = dependencies.fetch(:quota_usage_populating_collection_renderer)
+      @quota_usage_renderer = dependencies.fetch(:quota_usage_populating_renderer)
     end
 
     define_attributes do
@@ -78,7 +78,7 @@ module VCAP::CloudController
 
       opts = @opts.merge(transform_opts: { organization_id: org.id })
 
-      @quota_usage_collection_renderer.render_json(
+      @quota_usage_renderer.render_json(
         associated_controller,
         ds,
         opts,
